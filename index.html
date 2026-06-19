@@ -33,12 +33,6 @@
   .file-pill .remove { margin-left: auto; cursor: pointer; color: #9CA3AF; background: none; border: none;
     font-size: 1rem; line-height: 1; padding: 0 2px; }
   .file-pill .remove:hover { color: #374151; }
-  .date-row { margin-top: 1.3rem; display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
-  .date-row label { font-size: .8rem; color: #6B7280; }
-  .date-row input[type="date"] { font-family: inherit; font-size: .85rem; color: #374151; border: 1px solid #D1D5DB;
-    border-radius: 8px; padding: .45rem .6rem; background: #fff; }
-  .date-row input[type="date"]:focus { outline: none; border-color: #7B8DB0; }
-  .date-row .opt { font-size: .72rem; color: #9CA3AF; }
   .actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
   .btn-process { flex: 1; background: #4B5563; color: #fff; border: none; border-radius: 8px; padding: .7rem 1.25rem;
     font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; display: flex; align-items: center;
@@ -57,9 +51,6 @@
     padding: .7rem 1.25rem; font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; text-align: center;
     text-decoration: none; transition: background .15s; }
   .btn-download:hover { background: #1F2937; }
-  .download-meta { text-align: center; font-size: .8rem; color: #6B7280; margin-top: .7rem; }
-  .review-warning { margin-top: 1rem; background: #FDF4E7; border: 1px solid #F0D6A8; border-radius: 10px;
-    padding: .85rem 1.1rem; font-size: .82rem; font-weight: 500; color: #92400E; line-height: 1.5; text-align: center; }
   .error-item { padding: 1rem 2rem; background: #FEF2F2; border-top: 1px solid #FECACA; }
   .error-item p { font-size: .85rem; color: #B91C1C; }
   .modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.5); display: none; align-items: center;
@@ -78,7 +69,7 @@
 <div class="card">
   <div class="card-body">
     <div class="card-title">Affiliate Income Worksheet</div>
-    <div class="card-sub">Upload the month-end Consolidated P&amp;L export to generate the affiliate income worksheet &mdash; each broker&rsquo;s net income, Y&amp;S&rsquo;s share, and the journal-entry difference.</div>
+    <div class="card-sub">Upload the year-to-date (through prior month-end) Consolidated P&amp;L QBO report to generate the affiliate income worksheet and corresponding journal entries to make in YS Affiliates LLC&rsquo;s QBO file.</div>
 
     <div class="section-label">Consolidated P&amp;L</div>
     <div class="dropzone" id="dzPL" data-key="pl">
@@ -87,12 +78,6 @@
       <div class="dropzone-hint">Accepts .xlsx / .xlsm / .csv file types</div>
     </div>
     <div class="file-list" id="listPL"></div>
-
-    <div class="date-row">
-      <label for="monthEnd">Month-end date</label>
-      <input type="date" id="monthEnd">
-      <span class="opt">optional &mdash; auto-detected from the P&amp;L period</span>
-    </div>
 
     <div class="actions">
       <button class="btn-process" id="processBtn" disabled>
@@ -162,7 +147,6 @@
   document.getElementById('clearBtn').addEventListener('click', () => {
     store.pl = [];
     render('pl');
-    document.getElementById('monthEnd').value = '';
     resultsDiv.style.display = 'none'; resultsDiv.innerHTML = '';
   });
 
@@ -173,8 +157,6 @@
 
     const fd = new FormData();
     fd.append('pl', store.pl[0]);
-    const md = document.getElementById('monthEnd').value;
-    if (md) fd.append('month_end', md);
 
     try {
       const resp = await fetch('/process', { method: 'POST', body: fd });
@@ -186,8 +168,6 @@
         resultsDiv.innerHTML = `
           <div class="download-wrap">
             <a class="btn-download" href="${d.download_url}">Download Worksheet</a>
-            <div class="download-meta">${d.brokers} brokers &middot; through ${d.as_of}</div>
-            <div class="review-warning">Column E is filled from the K-1 income already booked on YS Affiliates LLC (YTD through two months ago). Verify it before posting the journal entry.</div>
           </div>`;
         resultsDiv.style.display = 'block';
         if (d.warnings && d.warnings.length) showWarnModal(d.warnings);
