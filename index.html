@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affiliate Income Worksheet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #EAECF0; min-height: 100vh; display: flex;
+    align-items: center; justify-content: center; padding: 2rem 1rem; color: #111; }
+  .card { background: #fff; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07), 0 8px 32px rgba(0,0,0,.09);
+    width: 100%; max-width: 620px; overflow: hidden; }
+  .card-body { padding: 2rem 2rem 1.75rem; }
+  .card-title { font-size: 1.3rem; font-weight: 700; margin-bottom: .35rem; letter-spacing: -.01em; }
+  .card-sub { font-size: .875rem; color: #6B7280; line-height: 1.6; margin-bottom: 1.6rem; }
+  .section-label { font-size: .65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: #9CA3AF; margin-bottom: .5rem; }
+  .section-label.spaced { margin-top: 1.3rem; }
+  .dropzone { border: 2px dashed #C4C9D8; border-radius: 12px; background: #F8F9FC; padding: 1.4rem 1.5rem;
+    text-align: center; cursor: pointer; transition: border-color .2s, background .2s; position: relative; }
+  .dropzone:hover, .dropzone.drag-over { border-color: #7B8DB0; background: #F0F3FA; }
+  .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .dropzone-text { font-size: .9rem; color: #374151; }
+  .dropzone-text strong { font-weight: 600; }
+  .dropzone-text a { color: #4B6FBE; text-decoration: none; }
+  .dropzone-text a:hover { text-decoration: underline; }
+  .dropzone-hint { font-size: .78rem; color: #9CA3AF; margin-top: .25rem; }
+  .file-list { display: flex; flex-direction: column; gap: .35rem; margin-top: .6rem; }
+  .file-pill { display: flex; align-items: center; gap: .6rem; background: #F3F4F6; border-radius: 7px;
+    padding: .4rem .7rem; font-size: .8rem; color: #374151; }
+  .file-pill .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-pill .remove { margin-left: auto; cursor: pointer; color: #9CA3AF; background: none; border: none;
+    font-size: 1rem; line-height: 1; padding: 0 2px; }
+  .file-pill .remove:hover { color: #374151; }
+  .date-row { margin-top: 1.3rem; display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+  .date-row label { font-size: .8rem; color: #6B7280; }
+  .date-row input[type="date"] { font-family: inherit; font-size: .85rem; color: #374151; border: 1px solid #D1D5DB;
+    border-radius: 8px; padding: .45rem .6rem; background: #fff; }
+  .date-row input[type="date"]:focus { outline: none; border-color: #7B8DB0; }
+  .date-row .opt { font-size: .72rem; color: #9CA3AF; }
+  .actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
+  .btn-process { flex: 1; background: #4B5563; color: #fff; border: none; border-radius: 8px; padding: .7rem 1.25rem;
+    font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: .5rem; transition: background .15s; }
+  .btn-process:hover:not(:disabled) { background: #1F2937; }
+  .btn-process:disabled { opacity: .55; cursor: not-allowed; }
+  .btn-clear { background: #fff; color: #374151; border: 1px solid #D1D5DB; border-radius: 8px; padding: .7rem 1.25rem;
+    font-family: inherit; font-weight: 500; font-size: .9rem; cursor: pointer; transition: background .15s, border-color .15s; }
+  .btn-clear:hover { background: #F9FAFB; border-color: #9CA3AF; }
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+    border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .results { border-top: 1px solid #F3F4F6; }
+  .download-wrap { padding: 1.25rem 2rem 1.5rem; }
+  .btn-download { display: block; width: 100%; background: #374151; color: #fff; border: none; border-radius: 8px;
+    padding: .7rem 1.25rem; font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; text-align: center;
+    text-decoration: none; transition: background .15s; }
+  .btn-download:hover { background: #1F2937; }
+  .download-meta { text-align: center; font-size: .8rem; color: #6B7280; margin-top: .7rem; }
+  .review-warning { margin-top: 1rem; background: #FDF4E7; border: 1px solid #F0D6A8; border-radius: 10px;
+    padding: .85rem 1.1rem; font-size: .82rem; font-weight: 500; color: #92400E; line-height: 1.5; text-align: center; }
+  .error-item { padding: 1rem 2rem; background: #FEF2F2; border-top: 1px solid #FECACA; }
+  .error-item p { font-size: .85rem; color: #B91C1C; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.5); display: none; align-items: center;
+    justify-content: center; z-index: 50; padding: 1rem; }
+  .modal { background: #fff; border-radius: 14px; max-width: 460px; width: 100%; padding: 1.5rem 1.5rem 1.25rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+  .modal-title { font-size: 1rem; font-weight: 700; color: #92400E; margin-bottom: .8rem; }
+  .modal-list { margin: 0 0 1.15rem; padding-left: 1.15rem; }
+  .modal-list li { font-size: .87rem; color: #374151; line-height: 1.55; margin-bottom: .35rem; }
+  .modal-ok { display: block; width: 100%; background: #4B5563; color: #fff; border: none; border-radius: 8px;
+    padding: .65rem; font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; transition: background .15s; }
+  .modal-ok:hover { background: #1F2937; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-body">
+    <div class="card-title">Affiliate Income Worksheet</div>
+    <div class="card-sub">Upload the month-end Consolidated P&amp;L export to generate the affiliate income worksheet &mdash; each broker&rsquo;s net income, Y&amp;S&rsquo;s share, and the journal-entry difference.</div>
+
+    <div class="section-label">Consolidated P&amp;L</div>
+    <div class="dropzone" id="dzPL" data-key="pl">
+      <input type="file" accept=".csv,.xlsx,.xlsm">
+      <div class="dropzone-text">Drag &amp; drop or <a href="#" class="browse">browse</a></div>
+      <div class="dropzone-hint">Accepts .xlsx / .xlsm / .csv file types</div>
+    </div>
+    <div class="file-list" id="listPL"></div>
+
+    <div class="date-row">
+      <label for="monthEnd">Month-end date</label>
+      <input type="date" id="monthEnd">
+      <span class="opt">optional &mdash; auto-detected from the P&amp;L period</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn-process" id="processBtn" disabled>
+        <span id="btnLabel">Generate Worksheet</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+      <button class="btn-clear" id="clearBtn">Clear</button>
+    </div>
+  </div>
+  <div class="results" id="results" style="display:none;"></div>
+</div>
+
+<div class="modal-overlay" id="warnModal">
+  <div class="modal">
+    <div class="modal-title">Please review before posting</div>
+    <ul class="modal-list" id="warnList"></ul>
+    <button class="modal-ok" id="warnOk">Okay</button>
+  </div>
+</div>
+
+<script>
+  const store = { pl: [] };
+  const processBtn = document.getElementById('processBtn');
+  const btnLabel = document.getElementById('btnLabel');
+  const spinner = document.getElementById('spinner');
+  const resultsDiv = document.getElementById('results');
+
+  function setup(id) {
+    const dz = document.getElementById(id);
+    const key = dz.dataset.key;
+    const input = dz.querySelector('input[type="file"]');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); add(key, e.dataTransfer.files); });
+    input.addEventListener('change', () => { add(key, input.files); input.value = ''; });
+    dz.querySelector('.browse').addEventListener('click', e => { e.preventDefault(); input.click(); });
+  }
+
+  function add(key, fileList) {
+    const f = [...fileList].filter(f => /\.(csv|xlsx|xlsm)$/i.test(f.name))[0];
+    if (f) store[key] = [f];   // one file per slot; newest replaces
+    render(key);
+  }
+
+  function render(key) {
+    const list = document.getElementById('listPL');
+    list.innerHTML = '';
+    store[key].forEach(f => {
+      const pill = document.createElement('div');
+      pill.className = 'file-pill';
+      pill.innerHTML = `<span class="fname">${f.name}</span><button class="remove" title="Remove">&times;</button>`;
+      pill.querySelector('.remove').addEventListener('click', () => { store[key] = []; render(key); });
+      list.appendChild(pill);
+    });
+    processBtn.disabled = store.pl.length === 0;
+  }
+
+  const warnModal = document.getElementById('warnModal');
+  document.getElementById('warnOk').addEventListener('click', () => { warnModal.style.display = 'none'; });
+  function showWarnModal(warnings) {
+    document.getElementById('warnList').innerHTML = warnings.map(w => `<li>${w}</li>`).join('');
+    warnModal.style.display = 'flex';
+  }
+
+  setup('dzPL');
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    store.pl = [];
+    render('pl');
+    document.getElementById('monthEnd').value = '';
+    resultsDiv.style.display = 'none'; resultsDiv.innerHTML = '';
+  });
+
+  processBtn.addEventListener('click', async () => {
+    if (!store.pl.length) return;
+    processBtn.disabled = true; btnLabel.textContent = 'Generating…'; spinner.style.display = 'block';
+    resultsDiv.style.display = 'none'; resultsDiv.innerHTML = '';
+
+    const fd = new FormData();
+    fd.append('pl', store.pl[0]);
+    const md = document.getElementById('monthEnd').value;
+    if (md) fd.append('month_end', md);
+
+    try {
+      const resp = await fetch('/process', { method: 'POST', body: fd });
+      const d = await resp.json();
+      if (!resp.ok || d.error) {
+        resultsDiv.innerHTML = `<div class="error-item"><p><strong>Error:</strong> ${d.error || 'Processing failed.'}</p></div>`;
+        resultsDiv.style.display = 'block';
+      } else {
+        resultsDiv.innerHTML = `
+          <div class="download-wrap">
+            <a class="btn-download" href="${d.download_url}">Download Worksheet</a>
+            <div class="download-meta">${d.brokers} brokers &middot; through ${d.as_of}</div>
+            <div class="review-warning">Column E is filled from the K-1 income already booked on YS Affiliates LLC (YTD through two months ago). Verify it before posting the journal entry.</div>
+          </div>`;
+        resultsDiv.style.display = 'block';
+        if (d.warnings && d.warnings.length) showWarnModal(d.warnings);
+      }
+    } catch (err) {
+      resultsDiv.innerHTML = `<div class="error-item"><p><strong>Network error:</strong> ${err.message}</p></div>`;
+      resultsDiv.style.display = 'block';
+    } finally {
+      processBtn.disabled = store.pl.length === 0;
+      btnLabel.textContent = 'Generate Worksheet'; spinner.style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>
