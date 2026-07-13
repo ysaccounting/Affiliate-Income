@@ -59,14 +59,13 @@ The output workbook has two tabs:
 
 - **Reconciliation** — one row per broker: Inv Balance per Books, Total for
   Equity - Y&S, Retained Earnings, Net Income, Y&S % Ownership, Y&S Share of
-  RE + Net Inc (`=F*(D+E)`), Expected Inv Balance (`=C+G`), Difference (`=B-H`),
-  and a Status of `OK` / `Review`. A live TOTAL row sums the money columns.
+  RE + Net Inc (`=F*(D+E)`), Expected Inv Balance (`=C+G`), and Difference (`=B-H`).
 - **Consolidated Balance Sheet** — the uploaded report, trimmed to just the rows the
   reconciliation reads: the report header rows, the `Inv - …` accounts, Retained
   Earnings, Net Income, and Total for Equity - Y&S.
 
-Rows flagged `Review` are genuine variances to chase — the tool surfaces them, it does
-not adjust them.
+A non-zero Difference is a genuine variance to chase — the tool surfaces it, it does
+not adjust it.
 
 ## Broker configuration
 

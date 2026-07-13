@@ -620,11 +620,7 @@ RECON_COLUMNS = [
     ("Y&S Share of\nRE + Net Inc", "G", 17.0,  CUR),
     ("Expected Inv\nBalance",      "H", 17.0,  CUR),
     ("Difference\n(Actual - Exp)", "I", 17.0,  CUR),
-    ("Status",                     "J", 11.0,  "General"),
 ]
-
-# Rounding tolerance (dollars) below which a difference is treated as clean.
-RECON_TOLERANCE = 0.01
 
 
 def build_recon_workbook(records, as_of, source_files=None, source_rows=None,
@@ -652,7 +648,6 @@ def build_recon_workbook(records, as_of, source_files=None, source_rows=None,
         ws.cell(r, 7, f"=F{r}*(D{r}+E{r})")           # Y&S share of RE + NI
         ws.cell(r, 8, f"=C{r}+G{r}")                   # expected Inv balance
         ws.cell(r, 9, f"=B{r}-H{r}")                   # difference
-        ws.cell(r, 10, f'=IF(ABS(I{r})<={RECON_TOLERANCE},"OK","Review")')
 
         for ci, (_l, _let, _w, fmt) in enumerate(RECON_COLUMNS, start=1):
             cell = ws.cell(r, ci)
@@ -660,18 +655,6 @@ def build_recon_workbook(records, as_of, source_files=None, source_rows=None,
             cell.alignment = CENTER
             if isinstance(fmt, str) and fmt != "General":
                 cell.number_format = fmt
-
-    # TOTAL row — live sums on the money columns.
-    last = len(records) + 1
-    tr = last + 1
-    ws.cell(tr, 1, "TOTAL").font = Font(name=FONT, size=11, bold=True)
-    ws.cell(tr, 1).alignment = CENTER
-    for ci in (2, 3, 4, 5, 7, 8, 9):
-        letter = get_column_letter(ci)
-        cell = ws.cell(tr, ci, f"=SUM({letter}2:{letter}{last})")
-        cell.font = Font(name=FONT, size=11, bold=True)
-        cell.alignment = CENTER
-        cell.number_format = CUR
 
     ws.freeze_panes = "A2"
 
@@ -775,18 +758,8 @@ def reconcile():
         fh.write(data_out)
     _cleanup_old()
 
-    # Count only rows we could actually evaluate on both sides.
-    def _out(r):
-        if r["InvBalance"] is None:
-            return False
-        eq = r["EquityYS"] or 0.0
-        share = (r["Ownership"] or 0.0) * ((r["RetainedEarnings"] or 0.0)
-                                           + (r["NetIncome"] or 0.0))
-        return abs(r["InvBalance"] - (eq + share)) > RECON_TOLERANCE
-
     return jsonify({
         "as_of": as_of.strftime("%B %d, %Y"),
-        "out_of_balance": sum(1 for r in records if _out(r)),
         "filename": fn,
         "download_url": f"/download/{token}",
         "warnings": warnings,

@@ -52,10 +52,6 @@
     padding: .7rem 1.25rem; font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; text-align: center;
     text-decoration: none; transition: background .15s; }
   .btn-download:hover { background: #1F2937; }
-  .recon-note { margin-top: .9rem; border-radius: 10px; padding: .7rem 1rem; font-size: .84rem;
-    font-weight: 600; line-height: 1.5; text-align: center; }
-  .recon-note.ok { background: #ECFDF5; border: 1px solid #A7D8C3; color: #10704F; }
-  .recon-note.flag { background: #FDF4E7; border: 1px solid #F0D6A8; color: #92400E; }
   .error-item { padding: 1rem 2rem; background: #FEF2F2; border-top: 1px solid #FECACA; }
   .error-item p { font-size: .85rem; color: #B91C1C; }
   .modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.5); display: none; align-items: center;
@@ -238,14 +234,9 @@
         reconResults.innerHTML = `<div class="error-item"><p><strong>Error:</strong> ${d.error || 'Reconciliation failed.'}</p></div>`;
         reconResults.style.display = 'block';
       } else {
-        const n = d.out_of_balance;
-        const note = n === 0
-          ? `<div class="recon-note ok">All accounts reconcile.</div>`
-          : `<div class="recon-note flag">${n} account${n === 1 ? '' : 's'} out of balance &mdash; see the Difference column.</div>`;
         reconResults.innerHTML = `
           <div class="download-wrap">
             <a class="btn-download" href="${d.download_url}">Download Reconciliation</a>
-            ${note}
           </div>`;
         reconResults.style.display = 'block';
         if (d.warnings && d.warnings.length) showWarnModal(d.warnings);
