@@ -1,4 +1,4 @@
-# Affiliate Income Worksheet
+# Affiliate Income Worksheet & Balance Sheet Reconciliation
 
 Web app: upload a QuickBooks **Consolidated P&L** export (`.xlsx`, `.xlsm`, or `.csv`)
 and download the **Affiliate Income Worksheet** — one row per affiliate broker showing
@@ -39,6 +39,35 @@ through two months ago, not last month — so column F (`=D-E`) is the increment
 entry for the latest month. The K-1 row label for each broker is set in the `BROKERS`
 table, and the value is read from the `YS Affiliates` column (falling back to `Total`).
 
+## Balance Sheet Reconciliation
+
+The second upload zone takes the **Consolidated Balance Sheet** QBO export and checks
+that each `Inv - …` investment account on **YS Affiliates LLC's** books ties to the
+affiliate's own equity. For each broker:
+
+```
+Expected Inv Balance = Total for Equity - Y&S            (on the affiliate's column)
+                     + Y&S% x (Retained Earnings + Net Income)   (on the affiliate's column)
+
+Difference = Inv Balance per Books - Expected Inv Balance
+```
+
+`Total for Equity - Y&S` is already net of capital contributions less distributions
+(QBO reports distributions as negative), so it adds directly — no sign flip needed.
+
+The output workbook has two tabs:
+
+- **Reconciliation** — one row per broker: Inv Balance per Books, Total for
+  Equity - Y&S, Retained Earnings, Net Income, Y&S % Ownership, Y&S Share of
+  RE + Net Inc (`=F*(D+E)`), Expected Inv Balance (`=C+G`), Difference (`=B-H`),
+  and a Status of `OK` / `Review`. A live TOTAL row sums the money columns.
+- **Consolidated Balance Sheet** — the uploaded report, trimmed to just the rows the
+  reconciliation reads: the report header rows, the `Inv - …` accounts, Retained
+  Earnings, Net Income, and Total for Equity - Y&S.
+
+Rows flagged `Review` are genuine variances to chase — the tool surfaces them, it does
+not adjust them.
+
 ## Broker configuration
 
 The broker list, each broker's P&L column name, and ownership % live in the `BROKERS`
@@ -46,11 +75,11 @@ table at the top of `app.py`:
 
 ```python
 BROKERS = [
-    ("YSM",         "YSM Tickets",         0.50),
-    ("YSS",         "YSS Tickets",         0.50),
-    # (display name, P&L entity column header, Y&S ownership fraction)
-    ("YSKG",        "YSKG Tickets",        0.25),
-    ("YSTL",        "YS TL Tickets",       0.35),
+    ("YSM",         "YSM Tickets",         0.50, "K-1 - YSM (Grossman)", "Inv - YSM (Grossman)"),
+    ("YSS",         "YSS Tickets",         0.50, "K-1 - YSS (Sternbuch)", "Inv - YSS (Sternbuch)"),
+    ("YSKG",        "YSKG Tickets",        0.25, "K-1 - YSKG",           "Inv - YSKG"),
+    ("YSTL",        "YS TL Tickets",       0.35, "K-1 - YS TL",          "Inv - YS TL"),
+    # (display, P&L/BS entity column, ownership, K-1 row label, Inv account label)
     ...
 ]
 ```
