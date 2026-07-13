@@ -8,7 +8,8 @@
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: #EAECF0; min-height: 100vh; display: flex;
-    align-items: center; justify-content: center; padding: 2rem 1rem; color: #111; }
+    flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;
+    padding: 2rem 1rem; color: #111; }
   .card { background: #fff; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07), 0 8px 32px rgba(0,0,0,.09);
     width: 100%; max-width: 620px; overflow: hidden; }
   .card-body { padding: 2rem 2rem 1.75rem; }
@@ -51,6 +52,10 @@
     padding: .7rem 1.25rem; font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; text-align: center;
     text-decoration: none; transition: background .15s; }
   .btn-download:hover { background: #1F2937; }
+  .recon-note { margin-top: .9rem; border-radius: 10px; padding: .7rem 1rem; font-size: .84rem;
+    font-weight: 600; line-height: 1.5; text-align: center; }
+  .recon-note.ok { background: #ECFDF5; border: 1px solid #A7D8C3; color: #10704F; }
+  .recon-note.flag { background: #FDF4E7; border: 1px solid #F0D6A8; color: #92400E; }
   .error-item { padding: 1rem 2rem; background: #FEF2F2; border-top: 1px solid #FECACA; }
   .error-item p { font-size: .85rem; color: #B91C1C; }
   .modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.5); display: none; align-items: center;
@@ -90,6 +95,30 @@
   <div class="results" id="results" style="display:none;"></div>
 </div>
 
+<div class="card">
+  <div class="card-body">
+    <div class="card-title">Balance Sheet Reconciliation</div>
+    <div class="card-sub">Upload the Consolidated Balance Sheet QBO report to check that each &ldquo;Inv&rdquo; account on YS Affiliates LLC&rsquo;s books equals the affiliate&rsquo;s Total for Equity &ndash; Y&amp;S plus Y&amp;S&rsquo;s share of its retained earnings and net income.</div>
+
+    <div class="section-label">Consolidated Balance Sheet</div>
+    <div class="dropzone" id="dzBS" data-key="balance_sheet">
+      <input type="file" accept=".csv,.xlsx,.xlsm">
+      <div class="dropzone-text">Drag &amp; drop or <a href="#" class="browse">browse</a></div>
+      <div class="dropzone-hint">Accepts .xlsx / .xlsm / .csv file types</div>
+    </div>
+    <div class="file-list" id="listBS"></div>
+
+    <div class="actions">
+      <button class="btn-process" id="reconBtn" disabled>
+        <span id="reconLabel">Reconcile</span>
+        <div class="spinner" id="reconSpinner"></div>
+      </button>
+      <button class="btn-clear" id="reconClearBtn">Clear</button>
+    </div>
+  </div>
+  <div class="results" id="reconResults" style="display:none;"></div>
+</div>
+
 <div class="modal-overlay" id="warnModal">
   <div class="modal">
     <div class="modal-title">Please review before posting</div>
@@ -99,11 +128,16 @@
 </div>
 
 <script>
-  const store = { pl: [] };
+  const store = { pl: [], balance_sheet: [] };
+  const LIST_ID = { pl: 'listPL', balance_sheet: 'listBS' };
   const processBtn = document.getElementById('processBtn');
   const btnLabel = document.getElementById('btnLabel');
   const spinner = document.getElementById('spinner');
   const resultsDiv = document.getElementById('results');
+  const reconBtn = document.getElementById('reconBtn');
+  const reconLabel = document.getElementById('reconLabel');
+  const reconSpinner = document.getElementById('reconSpinner');
+  const reconResults = document.getElementById('reconResults');
 
   function setup(id) {
     const dz = document.getElementById(id);
@@ -123,7 +157,7 @@
   }
 
   function render(key) {
-    const list = document.getElementById('listPL');
+    const list = document.getElementById(LIST_ID[key]);
     list.innerHTML = '';
     store[key].forEach(f => {
       const pill = document.createElement('div');
@@ -133,6 +167,7 @@
       list.appendChild(pill);
     });
     processBtn.disabled = store.pl.length === 0;
+    reconBtn.disabled = store.balance_sheet.length === 0;
   }
 
   const warnModal = document.getElementById('warnModal');
@@ -143,11 +178,18 @@
   }
 
   setup('dzPL');
+  setup('dzBS');
 
   document.getElementById('clearBtn').addEventListener('click', () => {
     store.pl = [];
     render('pl');
     resultsDiv.style.display = 'none'; resultsDiv.innerHTML = '';
+  });
+
+  document.getElementById('reconClearBtn').addEventListener('click', () => {
+    store.balance_sheet = [];
+    render('balance_sheet');
+    reconResults.style.display = 'none'; reconResults.innerHTML = '';
   });
 
   processBtn.addEventListener('click', async () => {
@@ -178,6 +220,42 @@
     } finally {
       processBtn.disabled = store.pl.length === 0;
       btnLabel.textContent = 'Generate Worksheet'; spinner.style.display = 'none';
+    }
+  });
+
+  reconBtn.addEventListener('click', async () => {
+    if (!store.balance_sheet.length) return;
+    reconBtn.disabled = true; reconLabel.textContent = 'Reconciling…'; reconSpinner.style.display = 'block';
+    reconResults.style.display = 'none'; reconResults.innerHTML = '';
+
+    const fd = new FormData();
+    fd.append('balance_sheet', store.balance_sheet[0]);
+
+    try {
+      const resp = await fetch('/reconcile', { method: 'POST', body: fd });
+      const d = await resp.json();
+      if (!resp.ok || d.error) {
+        reconResults.innerHTML = `<div class="error-item"><p><strong>Error:</strong> ${d.error || 'Reconciliation failed.'}</p></div>`;
+        reconResults.style.display = 'block';
+      } else {
+        const n = d.out_of_balance;
+        const note = n === 0
+          ? `<div class="recon-note ok">All accounts reconcile.</div>`
+          : `<div class="recon-note flag">${n} account${n === 1 ? '' : 's'} out of balance &mdash; see the Difference column.</div>`;
+        reconResults.innerHTML = `
+          <div class="download-wrap">
+            <a class="btn-download" href="${d.download_url}">Download Reconciliation</a>
+            ${note}
+          </div>`;
+        reconResults.style.display = 'block';
+        if (d.warnings && d.warnings.length) showWarnModal(d.warnings);
+      }
+    } catch (err) {
+      reconResults.innerHTML = `<div class="error-item"><p><strong>Network error:</strong> ${err.message}</p></div>`;
+      reconResults.style.display = 'block';
+    } finally {
+      reconBtn.disabled = store.balance_sheet.length === 0;
+      reconLabel.textContent = 'Reconcile'; reconSpinner.style.display = 'none';
     }
   });
 </script>
