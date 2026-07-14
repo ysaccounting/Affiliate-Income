@@ -90,6 +90,19 @@ K1_SOURCE_COLUMN = "YS Affiliates"
 EQUITY_YS_LABEL = "Total for Equity - Y&S"
 RETAINED_EARNINGS_LABEL = "Retained Earnings"
 
+# Y&S's share of an affiliate's RETAINED EARNINGS, where it differs from the
+# ownership % above (which is used for net income). Only list the exceptions;
+# any broker not named here uses its ownership % for both.
+#   YSM: Y&S takes 100% of retained earnings but 50% of net income.
+RE_OWNERSHIP_OVERRIDES = {
+    "YSM": 1.00,
+}
+
+
+def _re_ownership(display, pct):
+    """Y&S's share of retained earnings for a broker (defaults to ownership %)."""
+    return RE_OWNERSHIP_OVERRIDES.get(display, pct)
+
 # Entity columns expected on the P&L that are intentionally NOT broker rows
 # (parent / roll-up / report columns). Used only to decide whether an unmapped
 # "… Tickets" column is worth flagging as a possible new affiliate.
@@ -400,6 +413,7 @@ def parse_balance_sheet(rows):
             "RetainedEarnings": _cell(rows, re_i, col),
             "NetIncome": _cell(rows, ni_i, col),
             "Ownership": pct,
+            "REOwnership": _re_ownership(display, pct),
         })
 
     warnings = []
@@ -616,10 +630,11 @@ RECON_COLUMNS = [
     ("Total for\nEquity - Y&S",    "C", 16.0,  CUR),
     ("Retained\nEarnings",         "D", 16.0,  CUR),
     ("Net Income",                 "E", 16.0,  CUR),
-    ("Y&S %\nOwnership",           "F", 11.0,  PCT),
-    ("Y&S Share of\nRE + Net Inc", "G", 17.0,  CUR),
-    ("Expected Inv\nBalance",      "H", 17.0,  CUR),
-    ("Difference\n(Actual - Exp)", "I", 17.0,  CUR),
+    ("Y&S % of\nRetained Earnings", "F", 13.0, PCT),
+    ("Y&S % of\nNet Income",       "G", 13.0,  PCT),
+    ("Y&S Share of\nRE + Net Inc", "H", 17.0,  CUR),
+    ("Expected Inv\nBalance",      "I", 17.0,  CUR),
+    ("Difference\n(Actual - Exp)", "J", 17.0,  CUR),
 ]
 
 
@@ -644,10 +659,11 @@ def build_recon_workbook(records, as_of, source_files=None, source_rows=None,
         ws.cell(r, 3, rec["EquityYS"])
         ws.cell(r, 4, rec["RetainedEarnings"])
         ws.cell(r, 5, rec["NetIncome"])
-        ws.cell(r, 6, rec["Ownership"])
-        ws.cell(r, 7, f"=F{r}*(D{r}+E{r})")           # Y&S share of RE + NI
-        ws.cell(r, 8, f"=C{r}+G{r}")                   # expected Inv balance
-        ws.cell(r, 9, f"=B{r}-H{r}")                   # difference
+        ws.cell(r, 6, rec["REOwnership"])             # % of retained earnings
+        ws.cell(r, 7, rec["Ownership"])               # % of net income
+        ws.cell(r, 8, f"=F{r}*D{r}+G{r}*E{r}")        # Y&S share of RE + NI
+        ws.cell(r, 9, f"=C{r}+H{r}")                  # expected Inv balance
+        ws.cell(r, 10, f"=B{r}-I{r}")                 # difference
 
         for ci, (_l, _let, _w, fmt) in enumerate(RECON_COLUMNS, start=1):
             cell = ws.cell(r, ci)

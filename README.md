@@ -46,10 +46,21 @@ that each `Inv - …` investment account on **YS Affiliates LLC's** books ties t
 affiliate's own equity. For each broker:
 
 ```
-Expected Inv Balance = Total for Equity - Y&S            (on the affiliate's column)
-                     + Y&S% x (Retained Earnings + Net Income)   (on the affiliate's column)
+Expected Inv Balance = Total for Equity - Y&S                  (on the affiliate's column)
+                     + Y&S% of RE x Retained Earnings
+                     + Y&S% of NI x Net Income
 
 Difference = Inv Balance per Books - Expected Inv Balance
+```
+
+Y&S's share of **retained earnings** can differ from its share of **net income**. By
+default both use the broker's ownership %; exceptions are listed in
+`RE_OWNERSHIP_OVERRIDES` in `app.py`:
+
+```python
+RE_OWNERSHIP_OVERRIDES = {
+    "YSM": 1.00,     # Y&S takes 100% of YSM's retained earnings, but 50% of its net income
+}
 ```
 
 `Total for Equity - Y&S` is already net of capital contributions less distributions
@@ -58,8 +69,9 @@ Difference = Inv Balance per Books - Expected Inv Balance
 The output workbook has two tabs:
 
 - **Reconciliation** — one row per broker: Inv Balance per Books, Total for
-  Equity - Y&S, Retained Earnings, Net Income, Y&S % Ownership, Y&S Share of
-  RE + Net Inc (`=F*(D+E)`), Expected Inv Balance (`=C+G`), and Difference (`=B-H`).
+  Equity - Y&S, Retained Earnings, Net Income, Y&S % of Retained Earnings,
+  Y&S % of Net Income, Y&S Share of RE + Net Inc (`=F*D+G*E`), Expected Inv
+  Balance (`=C+H`), and Difference (`=B-I`).
 - **Consolidated Balance Sheet** — the uploaded report, trimmed to just the rows the
   reconciliation reads: the report header rows, the `Inv - …` accounts, Retained
   Earnings, Net Income, and Total for Equity - Y&S.
