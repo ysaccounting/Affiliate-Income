@@ -98,6 +98,12 @@ RE_OWNERSHIP_OVERRIDES = {
     "YSM": 1.00,
 }
 
+# Hard-coded "Total for Equity - Y&S" figures that should be used instead of the
+# value read from the Balance Sheet's own column. Only list exceptions.
+EQUITY_YS_OVERRIDES = {
+    "YSM": -1078603.60,
+}
+
 
 def _re_ownership(display, pct):
     """Y&S's share of retained earnings for a broker (defaults to ownership %)."""
@@ -405,11 +411,15 @@ def parse_balance_sheet(rows):
         else:
             keep.add(inv_i)
 
+        equity_ys = (EQUITY_YS_OVERRIDES[display]
+                     if display in EQUITY_YS_OVERRIDES
+                     else _cell(rows, eq_i, col))
+
         records.append({
             "Broker": display,
             "InvAccount": inv_label,
             "InvBalance": _cell(rows, inv_i, aff_col),
-            "EquityYS": _cell(rows, eq_i, col),
+            "EquityYS": equity_ys,
             "RetainedEarnings": _cell(rows, re_i, col),
             "NetIncome": _cell(rows, ni_i, col),
             "Ownership": pct,

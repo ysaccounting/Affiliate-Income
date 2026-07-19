@@ -63,6 +63,15 @@ RE_OWNERSHIP_OVERRIDES = {
 }
 ```
 
+Similarly, a hard-coded "Total for Equity - Y&S" can replace the value read from the
+Balance Sheet for specific brokers (the raw report tab still shows the original):
+
+```python
+EQUITY_YS_OVERRIDES = {
+    "YSM": -1078603.60,
+}
+```
+
 `Total for Equity - Y&S` is already net of capital contributions less distributions
 (QBO reports distributions as negative), so it adds directly — no sign flip needed.
 
