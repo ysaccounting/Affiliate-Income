@@ -63,12 +63,13 @@ RE_OWNERSHIP_OVERRIDES = {
 }
 ```
 
-Similarly, a hard-coded "Total for Equity - Y&S" can replace the value read from the
-Balance Sheet for specific brokers (the raw report tab still shows the original):
+Similarly, an adjustment can be applied to "Total for Equity - Y&S" for specific
+brokers — the value read from the Balance Sheet plus the amount below (the raw report
+tab still shows the unadjusted original):
 
 ```python
-EQUITY_YS_OVERRIDES = {
-    "YSM": -1078603.60,
+EQUITY_YS_ADJUSTMENTS = {
+    "YSM": -60437.99,     # balance-sheet equity, less 60,437.99
 }
 ```
 

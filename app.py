@@ -98,10 +98,12 @@ RE_OWNERSHIP_OVERRIDES = {
     "YSM": 1.00,
 }
 
-# Hard-coded "Total for Equity - Y&S" figures that should be used instead of the
-# value read from the Balance Sheet's own column. Only list exceptions.
-EQUITY_YS_OVERRIDES = {
-    "YSM": -1078603.60,
+# Adjustments applied to "Total for Equity - Y&S" for specific brokers: the value
+# read from the Balance Sheet's own column PLUS the amount below. Only list
+# exceptions.
+#   YSM: balance-sheet equity less 60,437.99.
+EQUITY_YS_ADJUSTMENTS = {
+    "YSM": -60437.99,
 }
 
 
@@ -411,9 +413,9 @@ def parse_balance_sheet(rows):
         else:
             keep.add(inv_i)
 
-        equity_ys = (EQUITY_YS_OVERRIDES[display]
-                     if display in EQUITY_YS_OVERRIDES
-                     else _cell(rows, eq_i, col))
+        equity_ys = _cell(rows, eq_i, col)
+        if display in EQUITY_YS_ADJUSTMENTS:
+            equity_ys = (equity_ys or 0.0) + EQUITY_YS_ADJUSTMENTS[display]
 
         records.append({
             "Broker": display,
